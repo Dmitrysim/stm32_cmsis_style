@@ -1,23 +1,7 @@
 #include "stm32f4xx.h"
 
 void timer_settings(void);
-
-void delay_ms(uint16_t ms)
-{
-	// 16000000/PSC/ARR = частота срабатывания таймера
-	// 1 ms - 1 kHz
-	// 16000000/PSC = 1000
-	// PSC = 16000000/1000 = 16000 < 65535
-	RCC->APB1ENR |= RCC_APB1ENR_TIM6EN; // вкл. тактирование
-	TIM6->CR1 |= TIM_CR1_OPM; // однократн. срабат.
-	TIM6->PSC = 16000 - 1;
-	TIM6->ARR = ms;
-	TIM6->EGR |= TIM_EGR_UG; // переинициализация таймера
-	TIM6->SR &= ~ TIM_SR_UIF; // сбросим флаг
-	TIM6->CR1 |= TIM_CR1_CEN; // включить таймер
-	while(!(TIM6->SR & TIM_SR_UIF)) {} // ждем
-	
-}
+void delay_ms(uint16_t ms);
 
 typedef struct
 {
@@ -200,3 +184,21 @@ void timer_settings(void) {
 	TIM4->CCR4 = 180;
 	
 }
+
+void delay_ms(uint16_t ms)
+{
+	// 16000000/PSC/ARR = частота срабатывания таймера 
+	// 1 ms - 1 kHz
+	// 16000000/PSC = 1000
+	// PSC = 16000000/1000 = 16000 < 65535
+	RCC->APB1ENR |= RCC_APB1ENR_TIM6EN; // вкл. тактирование
+	TIM6->CR1 |= TIM_CR1_OPM; // однократн. срабат.
+	TIM6->PSC = 16000 - 1;
+	TIM6->ARR = ms;
+	TIM6->EGR |= TIM_EGR_UG; // переинициализация таймера
+	TIM6->SR &= ~ TIM_SR_UIF; // сбросим флаг
+	TIM6->CR1 |= TIM_CR1_CEN; // включить таймер
+	while(!(TIM6->SR & TIM_SR_UIF)) {} // ждем
+	
+}
+
