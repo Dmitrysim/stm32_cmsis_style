@@ -1,5 +1,7 @@
 #include "stm32f4xx.h"
 
+void timer_settings(void);
+
 void delay_ms(uint16_t ms)
 {
 	// 16000000/PSC/ARR = частота срабатывания таймера
@@ -43,55 +45,7 @@ int main (void)
 {
 	unsigned long int i;
 	
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN; // включили тактирование
-	//GPIOD->MODER |= GPIO_MODER_MODER12_0; // на выход
-	//GPIOD->MODER |= GPIO_MODER_MODER12_0 | GPIO_MODER_MODER13_0; // на выход
-	GPIOD->MODER |= GPIO_MODER_MODER12_0 | GPIO_MODER_MODER13_0 | GPIO_MODER_MODER14_0; // на выход
-	// 0: Output push-pull (reset state)
-	// 00: 2 MHz Low speed
-	
-	// 16000000/PSC/ARR = частота срабатывания таймера
-	// 1 ms - 1 kHz
-	// 16000000/PSC/ARR = 1000
-	// 16000000/16/1000 = 1000 < 65535
-	RCC->APB1ENR |= RCC_APB1ENR_TIM7EN; // вкл. тактирование
-	TIM7->PSC = 16 - 1;
-	//TIM7->PSC = 16000 - 1;
-	TIM7->ARR = 1000;
-	TIM7->DIER |= TIM_DIER_UIE; // разр прер.
-	NVIC_EnableIRQ(TIM7_IRQn); // разр. прер. в NVIC
-	// глобальное разрешение прерываний 
-	TIM7->CR1 |= TIM_CR1_CEN; // включить таймер
-	
-	//ШИМ
-	GPIOD->MODER |= GPIO_MODER_MODER15_1; // альтернативная ф-я
-	GPIOD->AFR[1] |= 0x20000000; // AFR[0] = AFRL, AFR[1] = AFRH, TIM4_CH4 - AF2
-	//
-	// частота ШИМ  - 100 Hz
-	// ARR - период - 256 уровней яркости
-	// 16000000/PSC/ARR = 100
-	// 16000000/PSC/256 = 100
-	// 16000000/625/256 = 1000 < 65535
-	// серво машина
-	// частота ШИМ  - 50 Hz (период 20 мс)
-	// длительность импульса ~1мс(одно крайнее) - 1,5мс(среднее) - 2,0мс(второе крайнее)
-	// от 1 мс до 2 мс - 180 град.
-	// с точностью 1 град - 20мс * 180 = 3600
-	// 16000000/PSC/3600 = 50
-	RCC->APB1ENR |= RCC_APB1ENR_TIM4EN; // вкл. тактирование
-	/*
-	TIM4->PSC = 625 - 1;
-	TIM4->ARR = 256;
-	*/
-	TIM4->PSC = 89 - 1;
-	TIM4->ARR = 3600;
-	
-	// CC4S: Capture/Compare 1 selection - 00: CC4 channel is configured as output.
-	TIM4->CCMR2 |= TIM_CCMR2_OC4M_2 | TIM_CCMR2_OC4M_1; // 110: PWM mode 1
-	TIM4->CCER |= TIM_CCER_CC4E; // подключить сигнал к ножке
-	TIM4->CR1 |= TIM_CR1_CEN; // включить таймер
-	//TIM4->CCR4 = 0;
-	TIM4->CCR4 = 180;
+	timer_settings();
 
 	while(1)
 	{
@@ -190,5 +144,59 @@ void TIM7_IRQHandler(void)
 		st_LED_PD15.cnt = st_LED_PD15.time; // перезагрузка счетчика
 		st_LED_PD15.flag = 1;
 	}
+	
+}
+
+void timer_settings(void) {
+	
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN; // включили тактирование
+	//GPIOD->MODER |= GPIO_MODER_MODER12_0; // на выход
+	//GPIOD->MODER |= GPIO_MODER_MODER12_0 | GPIO_MODER_MODER13_0; // на выход
+	GPIOD->MODER |= GPIO_MODER_MODER12_0 | GPIO_MODER_MODER13_0 | GPIO_MODER_MODER14_0; // на выход
+	// 0: Output push-pull (reset state)
+	// 00: 2 MHz Low speed
+	
+	// 16000000/PSC/ARR = частота срабатывания таймера
+	// 1 ms - 1 kHz
+	// 16000000/PSC/ARR = 1000
+	// 16000000/16/1000 = 1000 < 65535
+	RCC->APB1ENR |= RCC_APB1ENR_TIM7EN; // вкл. тактирование
+	TIM7->PSC = 16 - 1;
+	//TIM7->PSC = 16000 - 1;
+	TIM7->ARR = 1000;
+	TIM7->DIER |= TIM_DIER_UIE; // разр прер.
+	NVIC_EnableIRQ(TIM7_IRQn); // разр. прер. в NVIC
+	// глобальное разрешение прерываний 
+	TIM7->CR1 |= TIM_CR1_CEN; // включить таймер
+	
+	//ШИМ
+	GPIOD->MODER |= GPIO_MODER_MODER15_1; // альтернативная ф-я
+	GPIOD->AFR[1] |= 0x20000000; // AFR[0] = AFRL, AFR[1] = AFRH, TIM4_CH4 - AF2
+	//
+	// частота ШИМ  - 100 Hz
+	// ARR - период - 256 уровней яркости
+	// 16000000/PSC/ARR = 100
+	// 16000000/PSC/256 = 100
+	// 16000000/625/256 = 1000 < 65535
+	// серво машина
+	// частота ШИМ  - 50 Hz (период 20 мс)
+	// длительность импульса ~1мс(одно крайнее) - 1,5мс(среднее) - 2,0мс(второе крайнее)
+	// от 1 мс до 2 мс - 180 град.
+	// с точностью 1 град - 20мс * 180 = 3600
+	// 16000000/PSC/3600 = 50
+	RCC->APB1ENR |= RCC_APB1ENR_TIM4EN; // вкл. тактирование
+	/*
+	TIM4->PSC = 625 - 1;
+	TIM4->ARR = 256;
+	*/
+	TIM4->PSC = 89 - 1;
+	TIM4->ARR = 3600;
+	
+	// CC4S: Capture/Compare 1 selection - 00: CC4 channel is configured as output.
+	TIM4->CCMR2 |= TIM_CCMR2_OC4M_2 | TIM_CCMR2_OC4M_1; // 110: PWM mode 1
+	TIM4->CCER |= TIM_CCER_CC4E; // подключить сигнал к ножке
+	TIM4->CR1 |= TIM_CR1_CEN; // включить таймер
+	//TIM4->CCR4 = 0;
+	TIM4->CCR4 = 180;
 	
 }
