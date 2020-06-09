@@ -1,27 +1,12 @@
 #include "stm32f4xx.h"
 
-void delay_ms(uint16_t ms)
-{
-	// 16000000/PSC/ARR = частота срабатывания таймера
-	// 1 ms - 1 kHz
-	// 16000000/PSC = 1000
-	// PSC = 16000000/1000 = 16000 < 65535
-	RCC->APB1ENR |= RCC_APB1ENR_TIM6EN; // вкл. тактирование
-	TIM6->CR1 |= TIM_CR1_OPM; // однократн. срабат.
-	TIM6->PSC = 16000 - 1;
-	TIM6->ARR = ms;
-	TIM6->EGR |= TIM_EGR_UG; // переинициализация таймера
-	TIM6->SR &= ~ TIM_SR_UIF; // сбросим флаг
-	TIM6->CR1 |= TIM_CR1_CEN; // включить таймер
-	while(!(TIM6->SR & TIM_SR_UIF)) {} // ждем
-	
-}
+void delay_ms(uint16_t ms);
 
 typedef struct
 {
-	uint16_t cnt; // счетчик, мс
-	uint16_t time; // время счета, мс
-	uint8_t flag; // 1 - таймер сработал
+	uint16_t cnt; 	// счетчик, мс
+	uint16_t time; 	// время счета, мс
+	uint8_t flag; 	// 1 - таймер сработал
 } soft_tim;
 
 soft_tim st_LED_PD12 = {0, 100, 0};
@@ -31,10 +16,10 @@ soft_tim st_LED_PD15 = {0, 28, 0};
 
 typedef struct
 {
-	uint16_t cnt; // счетчик, мс
-	uint16_t time; // время счета, мс
-	uint8_t flag; // 1 - таймер сработал
-	uint8_t en; // 1 - работа разрешена
+	uint16_t cnt; 	// счетчик, мс
+	uint16_t time; 	// время счета, мс
+	uint8_t flag; 	// 1 - таймер сработал
+	uint8_t en; 	// 1 - работа разрешена
 } soft_tim2;
 
 soft_tim2 st_LED_PD14 = {0, 100, 0, 0};
@@ -527,4 +512,21 @@ void EXTI0_IRQHandler(void)
 	EXTI->PR |= EXTI_PR_PR0; // сброс флага
 	EXTI->IMR &= ~ EXTI_IMR_MR0; // запретили прерывания
 	key_USER.key_state = key_bounce;
+}
+
+void delay_ms(uint16_t ms)
+{
+	// 16000000/PSC/ARR = частота срабатывания таймера
+	// 1 ms - 1 kHz
+	// 16000000/PSC = 1000
+	// PSC = 16000000/1000 = 16000 < 65535
+	RCC->APB1ENR |= RCC_APB1ENR_TIM6EN; // вкл. тактирование
+	TIM6->CR1 |= TIM_CR1_OPM; // однократн. срабат.
+	TIM6->PSC = 16000 - 1;
+	TIM6->ARR = ms;
+	TIM6->EGR |= TIM_EGR_UG; // переинициализация таймера
+	TIM6->SR &= ~ TIM_SR_UIF; // сбросим флаг
+	TIM6->CR1 |= TIM_CR1_CEN; // включить таймер
+	while(!(TIM6->SR & TIM_SR_UIF)) {} // ждем
+	
 }
