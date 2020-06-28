@@ -1,0 +1,5 @@
+#define RD_ 0x80
+#define WR_ 0x00
+
+#define WHO_AM_I 0x0F
+#define INFO1 0x0D
